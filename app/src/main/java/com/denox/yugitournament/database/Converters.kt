@@ -6,7 +6,7 @@ import com.google.gson.reflect.TypeToken
 import java.lang.reflect.Type
 import java.util.*
 
-object ArrayListConverters {
+object Converters {
 
     @TypeConverter
     fun toStringList(value: String): List<String> {
@@ -39,6 +39,15 @@ object ArrayListConverters {
     fun fromLongList(list: List<Long>): String {
         val gson = Gson()
         return gson.toJson(list)
+    }
+
+    @TypeConverter
+    fun fromTimestamp(value: Long): Date {
+        return Date(value)
+    }
+    @TypeConverter
+    fun dateToTimestamp(date: Date): Long {
+        return date.time
     }
 
 }

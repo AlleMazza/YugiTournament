@@ -5,22 +5,19 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.room.Room
 import androidx.viewpager.widget.ViewPager
 import com.denox.yugitournament.algorithm.DataHolder
-import com.denox.yugitournament.algorithm.Tournament
 import com.denox.yugitournament.database.AppDatabase
 import com.denox.yugitournament.ui.main.SectionsPagerAdapter
 import com.google.android.material.tabs.TabLayout
-import java.util.*
-import kotlin.random.Random
 
-class MainActivity : AppCompatActivity() { // TODO make layout better ffs
-    lateinit var sectionsPagerAdapter: SectionsPagerAdapter
+class MainActivity : AppCompatActivity() {
+    private lateinit var sectionsPagerAdapter: SectionsPagerAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val dataHolder = DataHolder(
             database = Room.databaseBuilder(applicationContext, AppDatabase::class.java,
-                "tournamentsDB").build()
+                "tournamentsDB").allowMainThreadQueries().build()
         )
         sectionsPagerAdapter =
             SectionsPagerAdapter(this, dataHolder, supportFragmentManager)

@@ -1,7 +1,9 @@
 package com.denox.yugitournament.algorithm
 
-import androidx.lifecycle.MutableLiveData
 import com.denox.yugitournament.database.*
+import com.denox.yugitournament.ui.fragment.PlayerPairingsFragment
+import com.denox.yugitournament.ui.fragment.PlayerRegistrationFragment
+import com.denox.yugitournament.ui.fragment.PlayerStandingsFragment
 import java.util.*
 import kotlin.random.Random
 
@@ -10,7 +12,9 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
     var standingsHistory = mutableListOf<List<PlayerRanking>>()
     var pairingsHistory = mutableListOf<List<Pair<Int, Int>>>()
     var currentRound = 0
-    val callStandingsUpdate = MutableLiveData(false)
+    var callRegistrationFragment: PlayerRegistrationFragment? = null
+    var callPairingsFragment: PlayerPairingsFragment? = null
+    var callStandingsFragment: PlayerStandingsFragment? = null
 
     fun addPlayer(name: String = "placeholder"): Player {
         val newKey = players.keys.maxOrNull()?.plus(1) ?: 1
@@ -32,24 +36,26 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
         return false
     }
 
-    fun undropPlayer(seed: Int) = players[seed]?.let {
-        if ((it.getMatchHistorySize() == currentRound) ||
-                (it.getMatchHistorySize() == currentRound &&
-                        let lambda@ { _ ->
-                            val lastPairing = pairingsHistory.last().find { pair ->
-                                pair.first == it.seed || pair.second == it.seed
-                            }
-                            return@lambda when {
-                                lastPairing?.first == it.seed -> lastPairing.second
-                                lastPairing?.second == it.seed -> lastPairing.first
-                                else -> null
-                            }
-                        }?.let { opponent -> it.getResultAgainst(opponent) == null } == true
-                        ))
-                            it.isDropped = false
-        else
-            return false
-    } != null
+    fun undropPlayer(player: Player): Boolean {
+        if ((player.getMatchHistorySize() == currentRound) ||
+            (player.getMatchHistorySize() != currentRound &&
+                    let lambda@ {
+                        val lastPairing = getLastPairings()?.find { pair ->
+                            pair.first == player.seed || pair.second == player.seed
+                        }
+                        return@lambda when {
+                            lastPairing?.first == player.seed -> lastPairing.second
+                            lastPairing?.second == player.seed -> lastPairing.first
+                            else -> null
+                        }
+                    }?.let { opponent -> player.getResultAgainst(opponent) == null } == true
+                    )) {
+            player.isDropped = false
+            return true
+        }
+        return false
+    }
+    fun undropPlayer(seed: Int) = players[seed]?.let { undropPlayer(it) } ?: false
 
     fun playerStandings(): List<PlayerRanking> {
         val playersRanked = players.values.filter { !it.isDropped }
@@ -91,6 +97,7 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
             if (it.first < 0) { setResult(it.first, it.second, 0) }
             if (it.second < 0) { setResult(it.first, it.second, 3) }
         }
+        callRegistrationFragment?.checkEnabledButtons()
     }
 
     fun nextRoundOrStart(keepSeeding: Boolean = false) = when (currentRound) {
@@ -98,7 +105,7 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
         else -> nextRound()
     }
 
-    fun cancelLastRound() { // TODO button to call this (with "are you sure?")
+    fun cancelLastRound() {
         if (currentRound < 1) { return }
         --currentRound
         players.forEach { ( _ , player ) ->
@@ -108,6 +115,7 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
         }
         if (standingsHistory.isNotEmpty()) { standingsHistory.removeLast() }
         pairingsHistory.removeLast()
+        callRegistrationFragment?.checkEnabledButtons()
     }
 
     private fun generatePairingsByRanking(standings: List<PlayerRanking>) =
@@ -138,7 +146,7 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
         }
         val tryPairings = recursivePairings(players)
         if (tryPairings != null) { return tryPairings }
-        // TODO print warning (toast): no possible combinations
+        callPairingsFragment?.maximumPairingsExceeded()
         val pairings = mutableListOf<Pair<Int, Int>>()
         for (i in players.indices step 2) {
             pairings.add(Pair(players[i].seed, players[i+1].seed))
@@ -182,7 +190,7 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
         if (result1 != 0 && result1 != 1 && result1 != 3) { return false }
         players[seed1]?.changeResult(seed2, result1)
         players[seed2]?.changeResult(seed1, when (result1) { 0 -> 3; 1 -> 1; 3 -> 0; else -> -1 })
-        callStandingsUpdate.postValue(true)
+        callStandingsFragment?.loadTournament()
         return true
     }
 
@@ -192,8 +200,17 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
             if (pairingsHistory.isEmpty()) null
             else pairingsHistory.last()
 
-    fun isClear() = players.isEmpty() && pairingsHistory.isEmpty() &&
+    fun isEmpty() = players.isEmpty() && pairingsHistory.isEmpty() &&
             standingsHistory.isEmpty() && currentRound == 0
+
+    fun allResultsGiven(): Boolean {
+        players.forEach { ( _, player ) ->
+            if (!(player.isDropped) && player.getMatchHistorySize() != currentRound) {
+                return false
+            }
+        }
+        return true
+    }
 
     fun toTournamentEntry(database: AppDatabase?)
     : TournamentEntry {
@@ -231,15 +248,17 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
     }
 
     fun saveTournament(database: AppDatabase) {
-        database.tournamentDao().insertTournament(toTournamentEntry(database))
+        if (!isEmpty()) {
+            database.tournamentDao().insertTournament(toTournamentEntry(database))
+        }
     }
 
-    fun insertPlayers(list: List<PlayerEntry>) {
+    fun loadPlayers(list: List<PlayerEntry>) {
         players.clear()
-        list.forEach { it1 -> Player.fromPlayerEntry(it1).let { it2 -> players[it2.seed] } }
+        list.forEach { it1 -> Player.fromPlayerEntry(it1).let { it2 -> players[it2.seed] = it2 } }
     }
 
-    fun insertStandings(list: List<StandingsEntry>) {
+    fun loadStandings(list: List<StandingsEntry>) {
         standingsHistory.clear()
         list.sortedBy { it.index }.forEach {
             standingsHistory.add(it.seedsList.indices.map { i ->
@@ -253,13 +272,19 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
         }
     }
 
-    fun insertPairings(list: List<PairingsEntry>) {
+    fun loadPairings(list: List<PairingsEntry>) {
         pairingsHistory.clear()
         list.sortedBy { it.index }.forEach {
             pairingsHistory.add(it.player1List.indices.map { i ->
                 Pair(it.player1List[i], it.player2List[i])
             })
         }
+    }
+
+    fun callNewTournament(newTournament: Tournament?) {
+        callRegistrationFragment?.loadTournament(newTournament)
+        callPairingsFragment?.loadTournament(newTournament)
+        callStandingsFragment?.loadTournament(newTournament)
     }
 
     companion object {
@@ -270,9 +295,9 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
         ).apply {
             currentRound = te.currentRound
             if (database != null) {
-                insertPlayers(database.playersDao().getPlayers(id))
-                insertStandings(database.standingsDao().getStandings(id))
-                insertPairings(database.pairingsDao().getPairings(id))
+                loadPlayers(database.playersDao().getPlayers(id))
+                loadStandings(database.standingsDao().getStandings(id))
+                loadPairings(database.pairingsDao().getPairings(id))
             }
         }
 

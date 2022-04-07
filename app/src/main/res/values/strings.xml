@@ -6,4 +6,33 @@
     <string name="tab_text_4">Tournaments</string>
 
     <string name="saved_tournament_string">%1$s, round %2$s</string>
+    <string name="next_round">Next Round</string>
+    <string name="cancel_last_round">Cancel Last Round</string>
+    <string name="player_name">Player Name:</string>
+    <string name="add_player">Add Player</string>
+    <string name="rank">Rank</string>
+    <string name="name">Name</string>
+    <string name="points">Points</string>
+    <string name="tiebreaker">Tiebreaker</string>
+    <string name="new_tournament">New Tournament</string>
+    <string name="saved_tournaments">Saved Tournaments</string>
+    <string name="matches_unfinished">Not all matches are finished</string>
+    <string name="sure_cancel_round">Are you sure you want to cancel the last round?</string>
+    <string name="confirm">Confirm</string>
+    <string name="bye">BYE</string>
+    <string name="round_x">Round %1$s</string>
+    <string name="player_wins">%1$s wins</string>
+    <string name="draw">Draw</string>
+    <string name="no_result">No result</string>
+    <string name="player_vs_player">%1$s vs %2$s:   </string>
+    <string name="max_combinations_exceeded">Exceeded every possible round combination</string>
+    <string name="remove_player">Remove Player</string>
+    <string name="sure_remove_player">Are you sure you want to remove this player?</string>
+    <string name="undrop_player">Undrop Player</string>
+    <string name="drop_player">Drop Player</string>
+    <string name="sure_new_tournament">Are you sure you want to create a new tournament?</string>
+    <string name="load_tournament">Load Tournament</string>
+    <string name="sure_load_tournament">Are you sure you want to load this tournament?</string>
+    <string name="delete_tournament">Delete Tournament</string>
+    <string name="sure_delete_tournament">Are you sure you want to delete this tournament?</string>
 </resources>

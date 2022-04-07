@@ -20,7 +20,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="2px"
                 android:background="@color/white"
-                android:text="Rank" />
+                android:text="@string/rank" />
 
             <TextView
                 android:id="@+id/tableNameLabel"
@@ -28,7 +28,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="2px"
                 android:background="@color/white"
-                android:text="Name" />
+                android:text="@string/name" />
 
             <TextView
                 android:id="@+id/tablePointsLabel"
@@ -36,7 +36,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="2px"
                 android:background="@color/white"
-                android:text="Points" />
+                android:text="@string/points" />
 
             <TextView
                 android:id="@+id/tableTiebreakerLabel"
@@ -44,7 +44,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="2px"
                 android:background="@color/white"
-                android:text="Tiebreaker" />
+                android:text="@string/tiebreaker" />
 
         </TableRow>
 

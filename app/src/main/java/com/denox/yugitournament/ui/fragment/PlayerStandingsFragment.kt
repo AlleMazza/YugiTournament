@@ -11,7 +11,7 @@ import androidx.fragment.app.Fragment
 import com.denox.yugitournament.R
 import com.denox.yugitournament.algorithm.Tournament
 
-class PlayerStandingsFragment(private var tournament: Tournament? = null) : Fragment() { // TODO this doesn't update
+class PlayerStandingsFragment(private var tournament: Tournament? = null) : Fragment() {
     private val standingRows = mutableListOf<TableRow>()
     private lateinit var mainLayout: TableLayout
 
@@ -31,15 +31,11 @@ class PlayerStandingsFragment(private var tournament: Tournament? = null) : Frag
                     else TableRow.LayoutParams().apply { setMargins(2, 2, 2, 2) }
         }
 
-        if (tournament != newTournament) {
-            tournament = newTournament
-            tournament?.callStandingsUpdate?.observe(viewLifecycleOwner) {
-                if (it) { loadTournament() }
-                else { tournament!!.callStandingsUpdate.postValue(false) }
-            }
-        }
+        tournament = newTournament
+        tournament?.callStandingsFragment = this
         tournament?.let { tournament ->
             standingRows.forEach { mainLayout.removeView(it) }
+            standingRows.clear()
             var lastGivenRank = 0
             var lastPoints = Int.MAX_VALUE
             tournament.playerStandings().forEachIndexed { index, player ->

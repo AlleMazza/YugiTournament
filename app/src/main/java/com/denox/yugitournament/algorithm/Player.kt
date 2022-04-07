@@ -11,13 +11,13 @@ class Player(var seed: Int, var name: String = "placeholder") {
 
     fun points() = matchHistory.map { it.second }.sum()
 
-    // TODO dropped players count as having lost all following rounds, don't know if it is the right way
+    // dropped players count as having lost all following rounds, don't know if it is the right way
     fun winRate(numberOfRounds: Int = matchHistory.size): Double {
         val hadBye = receivedBye()
         return (matchHistory.map { it.second }.sum() - hadBye*3) / 3.0 / (numberOfRounds-hadBye)
     }
 
-    fun getResultAgainst(seed: Int) = matchHistory.firstOrNull { it.first == seed }?.first
+    fun getResultAgainst(seed: Int) = matchHistory.firstOrNull { it.first == seed }?.second
 
     fun removeResultAgainst(seed: Int) =
         matchHistory.removeAt(matchHistory.indexOfFirst { it.first == seed })
@@ -47,7 +47,7 @@ class Player(var seed: Int, var name: String = "placeholder") {
         else { matchHistory[it/2].second }
     }
     fun matchHistoryFromPlainList(list: List<Int>) {
-        matchHistory = MutableList(list.size/2) { Pair(list[it*2], list[it*2]+1) }
+        matchHistory = MutableList(list.size/2) { Pair(list[it*2], list[it*2+1]) }
     }
 
     fun toPlayerEntry(tournamentId: Int) = PlayerEntry(
