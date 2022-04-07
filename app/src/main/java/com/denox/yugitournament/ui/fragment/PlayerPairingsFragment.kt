@@ -106,7 +106,7 @@ class PlayerPairingsFragment(private var tournament: Tournament? = null) : Fragm
                 text = getString(R.string.player_wins, player2.name)
                 setOnClickListener {
                     tournament?.setResult(player1.seed, player2.seed, 0)
-                    resultTextView.text = getString(R.string.player_wins, player1.name)
+                    resultTextView.text = getString(R.string.player_wins, player2.name)
                 }
             })
             layoutButtons.addView(Button(context).apply {
