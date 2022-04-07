@@ -24,7 +24,7 @@
     <string name="player_wins">%1$s wins</string>
     <string name="draw">Draw</string>
     <string name="no_result">No result</string>
-    <string name="player_vs_player">%1$s vs %2$s:   </string>
+    <string name="player_vs_player">%1$s vs %2$s:&#160;&#160;&#160;</string>
     <string name="max_combinations_exceeded">Exceeded every possible round combination</string>
     <string name="remove_player">Remove Player</string>
     <string name="sure_remove_player">Are you sure you want to remove this player?</string>
