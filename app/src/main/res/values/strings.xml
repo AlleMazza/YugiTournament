@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Yugi Tournament</string>
+    <string name="tab_text_1">Registration</string>
+    <string name="tab_text_2">Pairings</string>
+    <string name="tab_text_3">Standings</string>
+    <string name="tab_text_4">Tournaments</string>
+
+    <string name="saved_tournament_string">%1$s, round %2$s</string>
+</resources>
