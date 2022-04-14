@@ -38,11 +38,13 @@ class PlayerStandingsFragment(private var tournament: Tournament? = null) : Frag
             standingRows.clear()
             var lastGivenRank = 0
             var lastPoints = Int.MAX_VALUE
+            var lastTiebreaker = Long.MAX_VALUE
             tournament.playerStandings().forEachIndexed { index, player ->
                 val newRow = TableRow(context).apply {
-                    if (player.points < lastPoints) {
+                    if (player.points < lastPoints || player.tiebreaker < lastTiebreaker) {
                         lastGivenRank = index+1
                         lastPoints = player.points
+                        lastTiebreaker = player.tiebreaker
                     }
                     addView(TextView(context).apply {
                         text = (lastGivenRank).toString()

@@ -89,6 +89,7 @@ class PlayerRegistrationFragment(private var tournament: Tournament? = null) : F
         dropButtons.add(dropButton)
         registeredPlayers.add(layout)
         mainLayout.addView(layout)
+        checkEnabledButtons()
     }
 
     fun checkEnabledButtons() {
