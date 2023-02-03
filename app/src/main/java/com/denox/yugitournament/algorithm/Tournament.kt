@@ -16,11 +16,49 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
     var callPairingsFragment: PlayerPairingsFragment? = null
     var callStandingsFragment: PlayerStandingsFragment? = null
 
-    fun addPlayer(name: String = "placeholder"): Player {
+    fun addPlayer(name: String = "placeholder", addToNextRound: Boolean = true): Player {
         val newKey = players.keys.maxOrNull()?.plus(1) ?: 1
         val newPlayer = Player(newKey, name)
         players[newKey] = newPlayer
-        //byePresent = (players.size % 2 == 1)
+
+        if (currentRound > 0) {
+            val availableRandomSeeds = MutableList(players.size) { (it*3)+1 }
+            var maxRandomSeed = 0
+            players.forEach { ( _ , player ) ->
+                availableRandomSeeds.remove(player.randomSeed)
+                if (player.randomSeed > maxRandomSeed) {
+                    maxRandomSeed = player.randomSeed
+                }
+            }
+            newPlayer.randomSeed =
+                if (availableRandomSeeds.isNotEmpty()) availableRandomSeeds.random()
+                else maxRandomSeed + Random.nextInt(1, 10)
+            for (i in 0 until (currentRound - (if (addToNextRound) 0 else 1))) {
+                newPlayer.skipRound()
+            }
+            if (!addToNextRound) {
+                val lastPairings = pairingsHistory.last().toMutableList()
+                val byeIndex = lastPairings.indexOfFirst { it.first == -1 || it.second == -1 }
+                if (byeIndex < 0) {
+                    lastPairings.add(Pair(newKey, -1))
+                    setResult(newKey, -1, 3)
+                }
+                else {
+                    if (lastPairings[byeIndex].first == -1) {
+                        lastPairings[byeIndex] = Pair(newKey, lastPairings[byeIndex].second)
+                        players[lastPairings[byeIndex].second]?.dropLastResult()
+                    }
+                    else {
+                        lastPairings[byeIndex] = Pair(lastPairings[byeIndex].first, newKey)
+                        players[lastPairings[byeIndex].first]?.dropLastResult()
+                    }
+                }
+                pairingsHistory[pairingsHistory.size - 1] = lastPairings
+                callPairingsFragment?.loadTournament()
+            }
+            callStandingsFragment?.loadTournament()
+        }
+
         return newPlayer
     }
 
@@ -37,23 +75,8 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
     }
 
     fun undropPlayer(player: Player): Boolean {
-        if ((player.getMatchHistorySize() == currentRound) ||
-            (player.getMatchHistorySize() != currentRound &&
-                    let lambda@ {
-                        val lastPairing = getLastPairings()?.find { pair ->
-                            pair.first == player.seed || pair.second == player.seed
-                        }
-                        return@lambda when {
-                            lastPairing?.first == player.seed -> lastPairing.second
-                            lastPairing?.second == player.seed -> lastPairing.first
-                            else -> null
-                        }
-                    }?.let { opponent -> player.getResultAgainst(opponent) == null } == true
-                    )) {
-            player.isDropped = false
-            return true
-        }
-        return false
+        player.isDropped = false
+        return true
     }
     fun undropPlayer(seed: Int) = players[seed]?.let { undropPlayer(it) } ?: false
 
@@ -71,7 +94,7 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
 
     private fun startTournament(keepSeeding: Boolean = false) {
         currentRound = 0
-        val randomizedSeeds = MutableList(players.size) { it+1 }
+        val randomizedSeeds = MutableList(players.size) { (it*3)+1 }
         players.forEach { ( _, player ) ->
             player.dropAllResults()
             if (keepSeeding) { player.randomSeed = player.seed }
@@ -96,6 +119,11 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
         newPairings.forEach {
             if (it.first < 0) { setResult(it.first, it.second, 0) }
             if (it.second < 0) { setResult(it.first, it.second, 3) }
+        }
+        players.forEach { ( _ , player ) ->
+            if (player.isDropped) {
+                player.skipRound()
+            }
         }
         callRegistrationFragment?.checkEnabledButtons()
     }
@@ -123,9 +151,18 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
     private fun generatePairings(players: List<Player>): List<Pair<Int, Int>> {
         fun recursivePairings(players: List<Player>): List<Pair<Int, Int>>? {
             if (players.isEmpty()) { return emptyList() }
-            if (players.size < 2) {
-                if (players[0].receivedBye() > 0) { return null }
-                return listOf(Pair(players[0].seed, -1))
+            if (players.size % 2 != 0) {
+                for (i in (players.size - 1) downTo 0) {
+                    if (players[i].receivedBye() <= 0) {
+                        val newPair = Pair(players[i].seed, -1)
+                        val remainingPlayers = players.filterIndexed { ix, _ -> ix != i }
+                        val recursiveResult = recursivePairings(remainingPlayers)
+                        if (recursiveResult != null) {
+                            return (recursiveResult + newPair)
+                        }
+                    }
+                }
+                return null
             }
             for (i in 1 until players.size) {
                 if (players[0].getResultAgainst(players[i].seed) == null) {
@@ -144,7 +181,8 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
             }
             return null
         }
-        val tryPairings = recursivePairings(players)
+
+        val tryPairings = recursivePairings(players)?.reversed()
         if (tryPairings != null) { return tryPairings }
         callPairingsFragment?.maximumPairingsExceeded()
         val pairings = mutableListOf<Pair<Int, Int>>()
@@ -160,13 +198,14 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
     private fun getOpponentWR(seed: Int): Double {
         var opponents = 0
         var winRatesTotal = 0.0
-        players[seed]?.getResultsList()?.forEach { ( seed, _ ) ->
-            if (seed == -1) { return@forEach }
+        players[seed]?.getResultsList()?.forEach { pair ->
+            val pairSeed = pair?.first ?: return@forEach
+            if (pairSeed == -1) { return@forEach }
             winRatesTotal +=
-                    if (players[seed]?.isDropped != false)
-                        players[seed]?.winRate() ?: 0.0
+                    if (players[pairSeed]?.isDropped != false)
+                        players[pairSeed]?.winRate() ?: 0.0
                     else
-                        players[seed]?.winRate(currentRound) ?: 0.0
+                        players[pairSeed]?.winRate(currentRound) ?: 0.0
             ++opponents
         } ?: return 0.0
         return if (opponents == 0) 0.0 else (winRatesTotal/opponents)
@@ -175,9 +214,10 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
     private fun getOpponent2WR(seed: Int): Double {
         var opponents = 0
         var winRatesTotal = 0.0
-        players[seed]?.getResultsList()?.forEach { ( seed, _ ) ->
-            if (seed == -1) { return@forEach }
-            winRatesTotal += getOpponentWR(seed)
+        players[seed]?.getResultsList()?.forEach { pair ->
+            val pairSeed = pair?.first ?: return@forEach
+            if (pairSeed == -1) { return@forEach }
+            winRatesTotal += getOpponentWR(pairSeed)
             ++opponents
         } ?: return 0.0
         return if (opponents == 0) 0.0 else (winRatesTotal/opponents)
@@ -212,8 +252,7 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
         return true
     }
 
-    fun toTournamentEntry(database: AppDatabase?)
-    : TournamentEntry {
+    fun toTournamentEntry(database: AppDatabase?): TournamentEntry {
         if (database != null) {
             database.playersDao().insertPlayers(
                 *players.map { it.value.toPlayerEntry(id) }.toTypedArray())

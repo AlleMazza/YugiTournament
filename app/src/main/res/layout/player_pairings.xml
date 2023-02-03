@@ -8,8 +8,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:orientation="vertical">
-
+        android:orientation="vertical"
+        android:paddingEnd="8dp"
+        android:paddingStart="8dp" >
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -22,6 +23,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 android:text="@string/next_round" />
 
             <Button
@@ -29,6 +32,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 android:text="@string/cancel_last_round" />
 
         </LinearLayout>
@@ -37,7 +42,9 @@
             android:id="@+id/roundLabel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Round 0" />
+            android:text="Round 0"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
     </LinearLayout>
 

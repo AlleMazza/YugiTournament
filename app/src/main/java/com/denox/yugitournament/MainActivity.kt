@@ -17,7 +17,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         val dataHolder = DataHolder(
             database = Room.databaseBuilder(applicationContext, AppDatabase::class.java,
-                "tournamentsDB").allowMainThreadQueries().build()
+                "tournamentsDB").addMigrations(AppDatabase.MIGRATION_1_2)
+                .allowMainThreadQueries().build()
         )
         sectionsPagerAdapter =
             SectionsPagerAdapter(this, dataHolder, supportFragmentManager)

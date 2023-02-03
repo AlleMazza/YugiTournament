@@ -1,6 +1,9 @@
 package com.denox.yugitournament.ui.fragment
 
 import android.os.Bundle
+import android.text.TextUtils
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -36,7 +39,7 @@ class PlayerPairingsFragment(private var tournament: Tournament? = null) : Fragm
             }
         }
         root.findViewById<Button>(R.id.cancelRoundButton).setOnClickListener {
-            if (tournament?.currentRound ?: 0 > 0) {
+            if ((tournament?.currentRound ?: 0) > 0) {
                 Snackbar.make(
                     mainLayout,
                     getString(R.string.sure_cancel_round),
@@ -77,7 +80,13 @@ class PlayerPairingsFragment(private var tournament: Tournament? = null) : Fragm
     }
 
     private fun addPairing(player1: Player, player2: Player) {
-        val layout = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+        val layout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPaddingRelative(0, TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                6.0F, context.resources.displayMetrics).toInt(), 0,
+                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6.0F,
+                    context.resources.displayMetrics).toInt())
+        }
         val layoutText = LinearLayout(context)
         layout.addView(layoutText)
         val resultTextView = TextView(context).apply {
@@ -87,16 +96,31 @@ class PlayerPairingsFragment(private var tournament: Tournament? = null) : Fragm
                 3 -> getString(R.string.player_wins, player1.name)
                 else -> getString(R.string.no_result)
             }
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16.0F)
+            ellipsize = TextUtils.TruncateAt.MIDDLE
+            isSingleLine = true
         }
         layoutText.addView(TextView(context).apply {
             text = getString(R.string.player_vs_player, player1.name, player2.name)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16.0F)
+            maxEms = 12
+            setPaddingRelative(0, 0, TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                8.0F, context.resources.displayMetrics).toInt(), 0)
         })
         layoutText.addView(resultTextView)
+        resultTextView.layoutParams.let {
+            if (it is LinearLayout.LayoutParams) {
+                it.gravity = Gravity.BOTTOM
+            }
+        }
         if (player1.seed > 0 && player2.seed > 0) {
-            val layoutButtons = LinearLayout(context)
+            val layoutButtons = LinearLayout(context).apply {
+                setVerticalGravity(Gravity.CENTER_VERTICAL)
+            }
             layout.addView(layoutButtons)
             layoutButtons.addView(Button(context).apply {
                 text = getString(R.string.player_wins, player1.name)
+                setEms(10)
                 setOnClickListener {
                     tournament?.setResult(player1.seed, player2.seed, 3)
                     resultTextView.text = getString(R.string.player_wins, player1.name)
@@ -104,6 +128,7 @@ class PlayerPairingsFragment(private var tournament: Tournament? = null) : Fragm
             })
             layoutButtons.addView(Button(context).apply {
                 text = getString(R.string.player_wins, player2.name)
+                setEms(10)
                 setOnClickListener {
                     tournament?.setResult(player1.seed, player2.seed, 0)
                     resultTextView.text = getString(R.string.player_wins, player2.name)

@@ -1,6 +1,7 @@
 package com.denox.yugitournament.ui.fragment
 
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -29,6 +30,7 @@ class PlayerStandingsFragment(private var tournament: Tournament? = null) : Frag
             view.layoutParams =
                     if (view.layoutParams != null) (view.layoutParams as TableRow.LayoutParams).apply { setMargins(2, 2, 2, 2) }
                     else TableRow.LayoutParams().apply { setMargins(2, 2, 2, 2) }
+            view.textAlignment = View.TEXT_ALIGNMENT_CENTER
         }
 
         tournament = newTournament
@@ -48,18 +50,23 @@ class PlayerStandingsFragment(private var tournament: Tournament? = null) : Frag
                     }
                     addView(TextView(context).apply {
                         text = (lastGivenRank).toString()
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 16.0F)
                         setBGAndMargin(this)
                     })
                     addView(TextView(context).apply {
                         text = player.name
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 16.0F)
                         setBGAndMargin(this)
+                        setEms(9)
                     })
                     addView(TextView(context).apply {
                         text = player.points.toString()
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 16.0F)
                         setBGAndMargin(this)
                     })
                     addView(TextView(context).apply {
                         text = player.tiebreaker.toString()
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 16.0F)
                         setBGAndMargin(this)
                     })
                 }

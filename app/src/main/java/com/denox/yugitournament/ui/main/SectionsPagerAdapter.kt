@@ -6,8 +6,6 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
 import com.denox.yugitournament.R
 import com.denox.yugitournament.algorithm.DataHolder
-import com.denox.yugitournament.algorithm.Tournament
-import com.denox.yugitournament.database.AppDatabase
 import com.denox.yugitournament.ui.fragment.PlayerPairingsFragment
 import com.denox.yugitournament.ui.fragment.PlayerRegistrationFragment
 import com.denox.yugitournament.ui.fragment.PlayerStandingsFragment

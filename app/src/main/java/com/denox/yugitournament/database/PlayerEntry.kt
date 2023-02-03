@@ -10,4 +10,5 @@ data class PlayerEntry(
     val matchHistory: List<Int>,
     val isDropped: Boolean,
     val randomSeed: Int,
+    val skippedRounds: List<Int>,
 )

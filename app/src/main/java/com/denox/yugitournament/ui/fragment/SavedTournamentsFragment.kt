@@ -1,6 +1,7 @@
 package com.denox.yugitournament.ui.fragment
 
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -54,6 +55,7 @@ class SavedTournamentsFragment(private var dataHolder: DataHolder) : Fragment() 
         val layoutButtons = LinearLayout(context)
         layout.addView(TextView(context).apply {
             text = getString(R.string.saved_tournament_string, te.date.toString(), te.currentRound.toString())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16.0F)
         })
         layout.addView(layoutButtons)
         layoutButtons.addView(Button(context).apply {

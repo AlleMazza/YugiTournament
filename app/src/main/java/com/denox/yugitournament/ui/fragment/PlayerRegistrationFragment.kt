@@ -1,6 +1,7 @@
 package com.denox.yugitournament.ui.fragment
 
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,6 +9,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.denox.yugitournament.R
 import com.denox.yugitournament.algorithm.Player
@@ -29,7 +31,31 @@ class PlayerRegistrationFragment(private var tournament: Tournament? = null) : F
             tournament?.let {
                 val nameField = root.findViewById<EditText>(R.id.playerNameText)
                 if (nameField.text.isNotEmpty()) {
-                    addPlayer(it.addPlayer(nameField.text.toString()))
+                    if ((tournament?.currentRound ?: 0) > 0) {
+                        var addNextRound = true
+                        val builder = AlertDialog.Builder(root.context)
+                        builder.apply {
+                            setSingleChoiceItems(arrayOf(
+                                if (it.pairingsHistory.last().any { ( p1 , p2 ) -> p1 == -1 || p2 == -1 })
+                                    getString(R.string.match_against_player_with_bye)
+                                else getString(R.string.add_player_with_bye),
+                                getString(R.string.add_player_next_round)), 1) { _, i ->
+                                addNextRound = if (i == 0) false else true
+                            }
+                            setPositiveButton(R.string.add_player) { _, _ ->
+                                addPlayer(it.addPlayer(nameField.text.toString(),
+                                    addToNextRound = addNextRound))
+                            }
+                            setNegativeButton(R.string.cancel) { dialog, _ ->
+                                dialog.cancel()
+                            }
+                        }
+                        builder.create().show()
+                    }
+                    else {
+                        addPlayer(it.addPlayer(nameField.text.toString()))
+                        nameField.setText("")
+                    }
                 }
             }
         }
@@ -48,14 +74,19 @@ class PlayerRegistrationFragment(private var tournament: Tournament? = null) : F
     }
 
     private fun addPlayer(player: Player) {
-        val layout = LinearLayout(context)
-        layout.addView(TextView(context).apply {
+        val layout = LinearLayout(context).apply {
+            isBaselineAligned = false
+        }
+        val textView = TextView(context).apply {
             text = player.name
-        })
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16.0F)
+            setEms(6)
+        }
+        layout.addView(textView)
         val removeButton = Button(context).apply {
             text = getString(R.string.remove_player)
             setOnClickListener {
-                if (tournament?.currentRound ?: 1 <= 0) {
+                if ((tournament?.currentRound ?: 1) < 1) {
                     Snackbar.make(
                         mainLayout,
                         getString(R.string.sure_remove_player),
@@ -78,7 +109,7 @@ class PlayerRegistrationFragment(private var tournament: Tournament? = null) : F
         val dropButton = Button(context).apply {
             text = if (player.isDropped) getString(R.string.undrop_player) else getString(R.string.drop_player)
             setOnClickListener {
-                if (tournament?.currentRound ?: 0 >= 1) {
+                if ((tournament?.currentRound ?: 0) > 0) {
                     if (player.isDropped) { tournament?.undropPlayer(player) }
                     else { tournament?.dropPlayer(player) }
                     text = if (player.isDropped) getString(R.string.undrop_player) else getString(R.string.drop_player)
@@ -94,14 +125,10 @@ class PlayerRegistrationFragment(private var tournament: Tournament? = null) : F
 
     fun checkEnabledButtons() {
         removeButtons.forEach {
-            if (tournament?.currentRound ?: 1 >= 1) {
-                it.isEnabled = false
-            }
+            it.isEnabled = (tournament?.currentRound ?: 1) < 1
         }
         dropButtons.forEach {
-            if (tournament?.currentRound ?: 0 <= 0) {
-                it.isEnabled = false
-            }
+            it.isEnabled = (tournament?.currentRound ?: 0) > 0
         }
     }
 
