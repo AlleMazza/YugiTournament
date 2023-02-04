@@ -186,7 +186,7 @@ class Tournament(val id: Int = Random.nextInt(), val date: Date) {
         if (tryPairings != null) { return tryPairings }
         callPairingsFragment?.maximumPairingsExceeded()
         val pairings = mutableListOf<Pair<Int, Int>>()
-        for (i in players.indices step 2) {
+        for (i in 0 until (players.size-1) step 2) {
             pairings.add(Pair(players[i].seed, players[i+1].seed))
         }
         if (pairings.size * 2 != players.size) {
